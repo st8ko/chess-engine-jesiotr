@@ -86,10 +86,10 @@ illegal_tiles = (
 
 state_of_the_game = board_beginning
 
-def basic_move(current_state = state_of_the_game, start_location = 0, end_location = 0):
+def basic_move(input_state = state_of_the_game, start_location = 0, end_location = 0):
     '''
     the most basic moving function
-    current_state indicates the state of the board before the move
+    input_state indicates the state of the board before the move
     start_location indicates from which field a piece is going to be moved
     end_location indicates to which field the piece is going to be moved
     the output of the function is new_state, the state of the board after the move is made
@@ -101,46 +101,73 @@ def basic_move(current_state = state_of_the_game, start_location = 0, end_locati
     
     if start_location < 0 or start_location > 120 or end_location < 0 or end_location > 120:
         # print('Invalid moves, the moves are outside of the chessboard')
-        # return(current_state)
+        # return(input_state)
         raise Exception('Invalid moves, the moves are outside of the chessboard')
     
     #Checking if the move is not stepping outside of the chessboard
     if illegal_tiles[end_location].islower(): 
         # print('Error, you can not move your piece to that tile')
         raise Exception("Error, you can not move your piece to that tile")
-        # return(current_state)
+        # return(input_state)
     
-    
-    #Extracting informations about the piece and its move
-    new_state = current_state
-    moving_piece = new_state[start_location] # extract the piece that is going to be moving
-    # new_state[start_location] = " " # empty the tile from which the piece is moved
-    
-    # new_state =
-    # text = 'abcdefg'
-    # text = text[:begin_location-1] + ' ' + text[begin_location:]
-    new_state = new_state[:start_location-1] + ' ' + new_state[start_location:]
-
     #Checking if your piece is not standing on the field to which you are moving your piece
-    if current_state[start_location].islower() and current_state[end_location].islower() or current_state[start_location].isupper() and current_state[end_location].isupper():
+    if input_state[start_location].islower() and input_state[end_location].islower() or input_state[start_location].isupper() and input_state[end_location].isupper():
         # print('You can not do this move, there is your piece standing on the tile to which you are trying to move')
         raise Exception("You can not do this move, your piece is standing on the tile to which you are trying to move")
-
+    
+    #Extracting informations about the piece and its move
+    modifying_state = input_state
+    moving_piece = modifying_state[start_location] # extract the piece that is going to be moving
+    print(f'the moving piece is {moving_piece}')
+    modifying_state = modifying_state[:start_location-1] + ' ' + modifying_state[start_location:]
+    
+    #Checking if there is a piece on the tile from which you want to move
+    if moving_piece == " ":
+        raise Exception('There is no piece on the field from which you are trying to move')
+    
+    #TODO check if the move which is made is actually possible, according to the set of legal moves by each piece
+    # currently the list of moves does not include castling nor en passant, they are going to be added later
+    the_move = end_location - start_location
+    if the_move not in possible_moves[moving_piece]:
+        print(f'the move you are trying to make: {the_move}, while the allowed moves are {possible_moves[moving_piece]}')
+        raise Exception('The piece you are trying to move doesn\'t move like that')
+    
     
     #Checking if enemy piece is captured
-    if current_state[end_location] != " ":
-        print(f'Taking over a piece: {current_state[end_location]}')
-        current_state[end_location] = moving_piece
-        return(current_state)
+    if modifying_state[end_location] != " ":
+        print(f'Taking over a piece: {modifying_state[end_location]}')
+        modifying_state = modifying_state[:start_location-1] + ' ' + modifying_state[start_location:]
+        modifying_state
+        modifying_state[end_location] = moving_piece
+        return(modifying_state)
     
     #Checking if the end location tile is empty
-    if current_state[end_location] == " ":
-        # new_state[end_location] = moving_piece
-        new_state = new_state[:end_location-1] + moving_piece + new_state[end_location:]
-        return(new_state)
+    if modifying_state[end_location] == " ":
+        # modifying_state[end_location] = moving_piece
+        # Modifying the tile onto which you are moving
+        output_state = modifying_state[:end_location-1] + moving_piece + modifying_state[end_location:]
+        # Cleaning the tile from which you are moving away
+        # output_state = modifying_state[:start_location-1] + " " + modifying_state[start_location:] # I think this causes problems
+        return(output_state)
     
 
-print(basic_move(start_location = 35, end_location = 55))    
-print(basic_move(start_location = 36, end_location = 56))    
+#TODO there is something wrong with capturing the pieces, once a capture happens, the piece doubles (appears both in the its starting location, and the location at which it takes over an enemy piece)
+# Moreover it seems that the state of the game does not see that a piece changes in a given position, loko at Move 3 and the fact that the engine does not recognize any pieces standing on position 55, while it definitely should, given the piece that stands there is captured    
+    
+    
+
+state1 = basic_move(start_location = 86, end_location = 66)  
+# print("="*30 + "MOVE 1" + "=" * 30)
+print(state1)
+# print("="*30 + "MOVE 2" + "=" * 30)
+state2 = basic_move(input_state = state1, start_location = 35, end_location = 55)
+print(state2)
+print(f'the piece on the 55th field is {state2[55]}')
+
+state3 = basic_move(input_state = state2, start_location = 65, end_location = 55)    
+print(state3)
+
+
 
 #TODO enable sequential playing, so that the state of the game is remembered and saved as the current state of the game, after a move is made
+
