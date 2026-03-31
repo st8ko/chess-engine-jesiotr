@@ -1,0 +1,146 @@
+# Chess engine
+
+
+
+#Some steps to start out:
+#Make a chessboard representation
+#Represent pieces on the chessboard
+#Represent moves which each piece can do
+#Do the search algorithm
+#Do the evaluation algorithm
+
+
+
+## CHESSBOARD
+
+# We are going to use a 10 x 12 array to represent the chessboard. This is a more memory efficient way of representing the chessboard then the 12 x 12 array, given it is less computationally demanding and yet has the same functionalities.
+
+board_beginning = (
+    "         \n"    # values 0 - 9
+    "         \n"    # values 10 - 19
+    " rnbkqbnr\n"  # values 20 - 29
+    " pppppppp\n"  # values 30 - 39
+    "         \n"    # values 40 - 49
+    "         \n"    # values 50 - 59
+    "         \n"    # values 60 - 69
+    "         \n"    # values 70 - 79
+    " PPPPPPPP\n"  # values 80 - 89
+    " RNBQKBNR\n"   # values 90 - 99
+    "         \n"    # values 100 - 109
+    "         \n"    # values 110 - 119
+) # in total we have 120 characters
+# print(f'length of board_begining after its definition {len(board_beginning)}')
+
+
+# Now represent the moves
+# I think that generating pseudo-legal moves first is the better decision, we can quickly prune them afterwards with the move making function or eval function if they are illegal
+
+# Directions
+N, W, E, S = -10, -1, +1, +10
+
+#just some trial locations
+# print(board_beginning[35]) 
+# print(board_beginning[25+S])
+
+# Moves for each of the pieces
+
+possible_moves = {
+    "P": [N, N + N, N+E, N+W], # white pawn can go one or two tiles up, it can also move diagonally one tile to capture
+    "p": [S, S + S, S+E, S+W], # black pawn can go one or two tiles down
+    "R": [N, S, W, E], # white rook can go to each horizontal and vertical direction
+    "r": [N, S, W, E], # black can do the same as the white rook
+    "B": [N+E, N+W, S+E, S+W], # white bishop can go to each diagonal direction
+    "b": [N+E, N+W, S+E, S+W], # black bishop can do the same as white bishop
+    "K": [N, N+E, E, S+E, S, S+W, W, N+W], # white king can go any direction, one square only
+    "k": [N, N+E, E, S+E, S, S+W, W, N+W], # black king can do the same as the white king
+    "Q": [N, N+E, E, S+E, S, S+W, W, N+W], # white queen can go any direction
+    "q": [N, N+E, E, S+E, S, S+W, W, N+W], # white queen can go any direction
+    "N": [N+N+W, N+N+E, E+E+N, E+E+S, S+S+E, S+S+W, W+W+S, W+W+N], # white knight can move as is said in chess
+    "n": [N+N+W, N+N+E, E+E+N, E+E+S, S+S+E, S+S+W, W+W+S, W+W+N] # and the black knight can do the same
+}
+
+#TODO for possible_moves variable, collapse black and white pieces together, so it is more compact, and then further down the line verify by using the figures with .lower() or .upper() if needed
+#TODO somehow there has to be a distinction that King can only move one tile at a time, and the queen can go as many as she can within the chessboard, and as long as there are no enemy pieces on the way
+#TODO implement the moving for en-passant, and castling and pawn promotion?
+
+# Illegal tiles on the chessboard
+
+illegal_tiles = (
+    "iiiiiiiiii"    # values 0 - 9
+    "iiiiiiiiii"    # values 10 - 19
+    "iiLLLLLLLL"  # values 20 - 29
+    "iiLLLLLLLL"  # values 30 - 39
+    "iiLLLLLLLL"   # values 40 - 49
+    "iiLLLLLLLL"   # values 50 - 59
+    "iiLLLLLLLL"   # values 60 - 69
+    "iiLLLLLLLL"   # values 70 - 79
+    "iiLLLLLLLL"  # values 80 - 89
+    "iiLLLLLLLL"   # values 90 - 99
+    "iiiiiiiiii"    # values 100 - 109
+    "iiiiiiiiii"    # values 110 - 119
+)
+# print(f'the lenght of the illegal_tiles after definition is {len(illegal_tiles)}')
+# mozemy zrobic padding po lewej stronie i nie po prawej, bo i tak bedzie przeskok z prawej strony szachownicy na lewa jesli zrobimy jeden ruch w prawo
+
+#TODO the basic values of start_location and end_location in the basic_move function should be dealt with somehow
+
+state_of_the_game = board_beginning
+
+def basic_move(current_state = state_of_the_game, start_location = 0, end_location = 0):
+    '''
+    the most basic moving function
+    current_state indicates the state of the board before the move
+    start_location indicates from which field a piece is going to be moved
+    end_location indicates to which field the piece is going to be moved
+    the output of the function is new_state, the state of the board after the move is made
+    '''
+    
+    #Checking if the start and end location even exist
+    if start_location == end_location:
+        raise Exception('Invalid move, the end location cannot be the same as the start locaiton')
+    
+    if start_location < 0 or start_location > 120 or end_location < 0 or end_location > 120:
+        # print('Invalid moves, the moves are outside of the chessboard')
+        # return(current_state)
+        raise Exception('Invalid moves, the moves are outside of the chessboard')
+    
+    #Checking if the move is not stepping outside of the chessboard
+    if illegal_tiles[end_location].islower(): 
+        # print('Error, you can not move your piece to that tile')
+        raise Exception("Error, you can not move your piece to that tile")
+        # return(current_state)
+    
+    
+    #Extracting informations about the piece and its move
+    new_state = current_state
+    moving_piece = new_state[start_location] # extract the piece that is going to be moving
+    # new_state[start_location] = " " # empty the tile from which the piece is moved
+    
+    # new_state =
+    # text = 'abcdefg'
+    # text = text[:begin_location-1] + ' ' + text[begin_location:]
+    new_state = new_state[:start_location-1] + ' ' + new_state[start_location:]
+
+    #Checking if your piece is not standing on the field to which you are moving your piece
+    if current_state[start_location].islower() and current_state[end_location].islower() or current_state[start_location].isupper() and current_state[end_location].isupper():
+        # print('You can not do this move, there is your piece standing on the tile to which you are trying to move')
+        raise Exception("You can not do this move, your piece is standing on the tile to which you are trying to move")
+
+    
+    #Checking if enemy piece is captured
+    if current_state[end_location] != " ":
+        print(f'Taking over a piece: {current_state[end_location]}')
+        current_state[end_location] = moving_piece
+        return(current_state)
+    
+    #Checking if the end location tile is empty
+    if current_state[end_location] == " ":
+        # new_state[end_location] = moving_piece
+        new_state = new_state[:end_location-1] + moving_piece + new_state[end_location:]
+        return(new_state)
+    
+
+print(basic_move(start_location = 35, end_location = 55))    
+print(basic_move(start_location = 36, end_location = 56))    
+
+#TODO enable sequential playing, so that the state of the game is remembered and saved as the current state of the game, after a move is made
