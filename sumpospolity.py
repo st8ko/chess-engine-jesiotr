@@ -45,8 +45,8 @@ N, W, E, S = -10, -1, +1, +10
 # Moves for each of the pieces
 
 possible_moves = {
-    "P": [N, N + N, N+E, N+W], # white pawn can go one or two tiles up, it can also move diagonally one tile to capture
-    "p": [S, S + S, S+E, S+W], # black pawn can go one or two tiles down
+    "P": [N], # white pawn can go one or two tiles up, it can also move diagonally one tile to capture, the extra moves are enabled based on the pieces position on the board and enemy pieces
+    "p": [S], # black pawn can go one or two tiles down, check above
     "R": [N, S, W, E], # white rook can go to each horizontal and vertical direction
     "r": [N, S, W, E], # black can do the same as the white rook
     "B": [N+E, N+W, S+E, S+W], # white bishop can go to each diagonal direction
@@ -121,6 +121,18 @@ def basic_move(input_state = board_beginning, start_location = 0, end_location =
     #TODO check if the move which is made is actually possible, according to the set of legal moves by each piece
     # currently the list of moves does not include castling nor en passant, they are going to be added later
     the_move = end_location - start_location
+    
+    # Move logic for the pawns
+    if moving_piece == "P" or moving_piece == "p":
+        if start_location in [range(30, 39), range(80, 89)]:
+            #extra moves from the starting tile for the pawns
+            possible_moves["P"] = [N, N + N]
+            possible_moves["p"] = [S, S + S]
+        if moving_piece.isupper() and modifying_state[end_location].islower() or moving_piece.islower() and modifying_state[end_location].isupper():
+            # possible_moves["P"] = possible_moves["P"].join(N+E) 
+            #TODO this logic doesn't work out yet -> consider: there would have to be separate function for movign diagonally to the right or left -> that would be 4 separate cases afterwards, maybe there is a simpler way?
+            # nie wiem czy to jest dobre podejście, bo w ten sposób sprawdzane są tylko ruchy które mozna wykonac, a nie wszystkie mozliwe ruchy?
+    
     if the_move not in possible_moves[moving_piece]:
         print(f'the move you are trying to make: {the_move}, while the allowed moves are {possible_moves[moving_piece]}')
         raise Exception('The piece you are trying to move doesn\'t move like that')
@@ -171,3 +183,5 @@ print(state4)
 
 
 #TODO enable sequential playing, so that the state of the game is remembered and saved as the current state of the game, after a move is made
+
+#TODO: enable the evaluation function, with the ability to determine whether the game has ended (so once you can capture the king)
