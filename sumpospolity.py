@@ -1,5 +1,5 @@
 # Chess engine
-
+import numpy as np
 
 
 #Some steps to start out:
@@ -15,21 +15,52 @@
 
 # We are going to use a 10 x 12 array to represent the chessboard. This is a more memory efficient way of representing the chessboard then the 12 x 12 array, given it is less computationally demanding and yet has the same functionalities.
 
-board_beginning = (
-    "         \n"    # values 0 - 9
-    "         \n"    # values 10 - 19
-    " rnbkqbnr\n"  # values 20 - 29
-    " pppppppp\n"  # values 30 - 39
-    "         \n"    # values 40 - 49
-    "         \n"    # values 50 - 59
-    "         \n"    # values 60 - 69
-    "         \n"    # values 70 - 79
-    " PPPPPPPP\n"  # values 80 - 89
-    " RNBQKBNR\n"   # values 90 - 99
-    "         \n"    # values 100 - 109
-    "         \n"    # values 110 - 119
-) # in total we have 120 characters
+# board_beginning = (
+#     "         \n"    # values 0 - 9
+#     "         \n"    # values 10 - 19
+#     " rnbkqbnr\n"  # values 20 - 29
+#     " pppppppp\n"  # values 30 - 39
+#     "         \n"    # values 40 - 49
+#     "         \n"    # values 50 - 59
+#     "         \n"    # values 60 - 69
+#     "         \n"    # values 70 - 79
+#     " PPPPPPPP\n"  # values 80 - 89
+#     " RNBQKBNR\n"   # values 90 - 99
+#     "         \n"    # values 100 - 109
+#     "         \n"    # values 110 - 119
+#) # in total we have 120 characters
 # print(f'length of board_begining after its definition {len(board_beginning)}')
+
+# A change of structure is necessary, the previous encodings would not be sufficient for computational goals of a chess engine
+
+# The pieces, and fields on the chessboard, are going to be encoded as constants
+EMPTY, OFF_BOARD = 0, 99
+WP, WN, WB, WR, WQ, WK = 1, 2, 3, 4, 5, 6
+BP, BN, BB, BR, BQ, BK = 7, 8, 9, 10, 11, 12
+
+# The chessboard is going to be an integer array, allowing for faster computation and easier mutations than a character string
+def initial_board():
+    b = [OFF_BOARD] * 120 # 
+    # Black pieces
+    b[21:29] = BR, BN, BB, BK, BQ, BB, BN, BR
+    b[31:39] = [BP] * 8
+    b[41:79] = [EMPTY] * 38
+    b[81:89] = [WP] * 8
+    b[91:99] = WR, WN, WB, WQ, WK, WB, WN, WR
+    return b
+
+# Add a function to make a move
+
+def make_move(board, start, end):
+    capture = board[end] # capturing the piece
+    board[end] = board[start] # transfering the piece
+    board[start] = EMPTY # emptying the initial field
+    return capture
+
+def unmake_move(board, start, end, captured = 0):
+    board[start] = board[end] # bringing back the piece which made a move into its original location
+    board[end] = captured # reinstalling the captured piece
+    
 
 
 # Now represent the moves
@@ -129,6 +160,7 @@ def basic_move(input_state = board_beginning, start_location = 0, end_location =
             possible_moves["P"] = [N, N + N]
             possible_moves["p"] = [S, S + S]
         if moving_piece.isupper() and modifying_state[end_location].islower() or moving_piece.islower() and modifying_state[end_location].isupper():
+            aa0 = 0 #placeholder
             # possible_moves["P"] = possible_moves["P"].join(N+E) 
             #TODO this logic doesn't work out yet -> consider: there would have to be separate function for movign diagonally to the right or left -> that would be 4 separate cases afterwards, maybe there is a simpler way?
             # nie wiem czy to jest dobre podejście, bo w ten sposób sprawdzane są tylko ruchy które mozna wykonac, a nie wszystkie mozliwe ruchy?
@@ -174,12 +206,12 @@ def basic_move(input_state = board_beginning, start_location = 0, end_location =
 # state3 = basic_move(input_state = state2, start_location = 65, end_location = 55)    
 # print(state3)
 
-state1 = basic_move(start_location = 88, end_location = 68)
-print(f'the piece which just moved is: {state1[67]}')
-state2 = basic_move(input_state = state1, start_location = 68, end_location = 48) #let's forget that this move is illegal now
-state3 = basic_move(input_state = state2, start_location = 48, end_location = 37)
-state4 = basic_move(input_state = state3, start_location = 37, end_location = 26)
-print(state4)
+# state1 = basic_move(start_location = 88, end_location = 68)
+# print(f'the piece which just moved is: {state1[67]}')
+# state2 = basic_move(input_state = state1, start_location = 68, end_location = 48) #let's forget that this move is illegal now
+# state3 = basic_move(input_state = state2, start_location = 48, end_location = 37)
+# state4 = basic_move(input_state = state3, start_location = 37, end_location = 26)
+# print(state4)
 
 
 #TODO enable sequential playing, so that the state of the game is remembered and saved as the current state of the game, after a move is made
