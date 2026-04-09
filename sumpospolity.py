@@ -1,37 +1,10 @@
 # Chess engine
 import numpy as np
 
-
-#Some steps to start out:
-#Make a chessboard representation
-#Represent pieces on the chessboard
-#Represent moves which each piece can do
-#Do the search algorithm
-#Do the evaluation algorithm
-
-
-
 ## CHESSBOARD
 
 # We are going to use a 10 x 12 array to represent the chessboard. This is a more memory efficient way of representing the chessboard then the 12 x 12 array, given it is less computationally demanding and yet has the same functionalities.
 
-# board_beginning = (
-#     "         \n"    # values 0 - 9
-#     "         \n"    # values 10 - 19
-#     " rnbkqbnr\n"  # values 20 - 29
-#     " pppppppp\n"  # values 30 - 39
-#     "         \n"    # values 40 - 49
-#     "         \n"    # values 50 - 59
-#     "         \n"    # values 60 - 69
-#     "         \n"    # values 70 - 79
-#     " PPPPPPPP\n"  # values 80 - 89
-#     " RNBQKBNR\n"   # values 90 - 99
-#     "         \n"    # values 100 - 109
-#     "         \n"    # values 110 - 119
-#) # in total we have 120 characters
-# print(f'length of board_begining after its definition {len(board_beginning)}')
-
-# A change of structure is necessary, the previous encodings would not be sufficient for computational goals of a chess engine
 
 # The pieces, and fields on the chessboard, are going to be encoded as constants
 EMPTY, OFF_BOARD = 0, 99
@@ -52,12 +25,31 @@ def initial_board():
 # Add a function to make a move
 
 def make_move(board, start, end):
+    '''
+    function to make moves
+    input:
+    board - initial state of the board
+    start - the location on the board of the piece which is going to be moved
+    end - the location towards which the moving piece is moved
+    
+    output: 
+    capture - the number representing the piece which was just captured
+    '''
+    
     capture = board[end] # capturing the piece
     board[end] = board[start] # transfering the piece
     board[start] = EMPTY # emptying the initial field
     return capture
 
 def unmake_move(board, start, end, captured = 0):
+    '''
+    function to unmake moves
+    input:
+    board - initial state of the board
+    start - the location on the board of the piece which was moved and is now going to be reverted TO
+    end - the location towards which the moving piece was moved and is now going to be reverted FROM
+    capture - the number representing the piece which was just captured
+    '''
     board[start] = board[end] # bringing back the piece which made a move into its original location
     board[end] = captured # reinstalling the captured piece
     
@@ -69,26 +61,42 @@ def unmake_move(board, start, end, captured = 0):
 # Directions
 N, W, E, S = -10, -1, +1, +10
 
-#just some trial locations
-# print(board_beginning[35]) 
-# print(board_beginning[25+S])
+# Add a list of pieces which can slide (move multiple tiles at a time)
+sliding_pieces = {WR, BR, WB, BB, WQ, BQ}
 
 # Moves for each of the pieces
 
 possible_moves = {
-    "P": [N], # white pawn can go one or two tiles up, it can also move diagonally one tile to capture, the extra moves are enabled based on the pieces position on the board and enemy pieces
-    "p": [S], # black pawn can go one or two tiles down, check above
-    "R": [N, S, W, E], # white rook can go to each horizontal and vertical direction
-    "r": [N, S, W, E], # black can do the same as the white rook
-    "B": [N+E, N+W, S+E, S+W], # white bishop can go to each diagonal direction
-    "b": [N+E, N+W, S+E, S+W], # black bishop can do the same as white bishop
-    "K": [N, N+E, E, S+E, S, S+W, W, N+W], # white king can go any direction, one square only
-    "k": [N, N+E, E, S+E, S, S+W, W, N+W], # black king can do the same as the white king
-    "Q": [N, N+E, E, S+E, S, S+W, W, N+W], # white queen can go any direction
-    "q": [N, N+E, E, S+E, S, S+W, W, N+W], # white queen can go any direction
-    "N": [N+N+W, N+N+E, E+E+N, E+E+S, S+S+E, S+S+W, W+W+S, W+W+N], # white knight can move as is said in chess
-    "n": [N+N+W, N+N+E, E+E+N, E+E+S, S+S+E, S+S+W, W+W+S, W+W+N] # and the black knight can do the same
+    "WP": [N], # white pawn 
+    "BP": [S], # black pawn 
+    "WR": [N, S, W, E], # white rook 
+    "BR": [N, S, W, E], # black rook
+    "BB": [N+E, N+W, S+E, S+W], # white bishop 
+    "WB": [N+E, N+W, S+E, S+W], # black bishop 
+    "BK": [N, N+E, E, S+E, S, S+W, W, N+W], # white king
+    "WK": [N, N+E, E, S+E, S, S+W, W, N+W], # black king
+    "WQ": [N, N+E, E, S+E, S, S+W, W, N+W], # white queen
+    "BQ": [N, N+E, E, S+E, S, S+W, W, N+W], # black queen
+    "BN": [N+N+W, N+N+E, E+E+N, E+E+S, S+S+E, S+S+W, W+W+S, W+W+N], # white knight
+    "WN": [N+N+W, N+N+E, E+E+N, E+E+S, S+S+E, S+S+W, W+W+S, W+W+N] # black knight
 }
+
+def pseudolegal_move(board, white_moves):
+    '''
+    function generating pseudolegal moves
+    board - input state of the board
+    white_moves = 1 if it is the white player's move and 0 if it is black player's move
+    '''
+    if white_moves:
+        my_pieces = range(1, 6)
+    else:
+        my_pieces = range(7, 12)
+    print(my_pieces)
+    #TODO continue this function
+    
+pseudolegal_move(0, 1)
+
+
 
 #TODO for possible_moves variable, collapse black and white pieces together, so it is more compact, and then further down the line verify by using the figures with .lower() or .upper() if needed
 #TODO somehow there has to be a distinction that King can only move one tile at a time, and the queen can go as many as she can within the chessboard, and as long as there are no enemy pieces on the way
@@ -96,20 +104,20 @@ possible_moves = {
 
 # Illegal tiles on the chessboard
 
-illegal_tiles = (
-    "iiiiiiiiii"    # values 0 - 9
-    "iiiiiiiiii"    # values 10 - 19
-    "iiLLLLLLLL"  # values 20 - 29
-    "iiLLLLLLLL"  # values 30 - 39
-    "iiLLLLLLLL"   # values 40 - 49
-    "iiLLLLLLLL"   # values 50 - 59
-    "iiLLLLLLLL"   # values 60 - 69
-    "iiLLLLLLLL"   # values 70 - 79
-    "iiLLLLLLLL"  # values 80 - 89
-    "iiLLLLLLLL"   # values 90 - 99
-    "iiiiiiiiii"    # values 100 - 109
-    "iiiiiiiiii"    # values 110 - 119
-)
+# illegal_tiles = (
+#     "iiiiiiiiii"    # values 0 - 9
+#     "iiiiiiiiii"    # values 10 - 19
+#     "iiLLLLLLLL"  # values 20 - 29
+#     "iiLLLLLLLL"  # values 30 - 39
+#     "iiLLLLLLLL"   # values 40 - 49
+#     "iiLLLLLLLL"   # values 50 - 59
+#     "iiLLLLLLLL"   # values 60 - 69
+#     "iiLLLLLLLL"   # values 70 - 79
+#     "iiLLLLLLLL"  # values 80 - 89
+#     "iiLLLLLLLL"   # values 90 - 99
+#     "iiiiiiiiii"    # values 100 - 109
+#     "iiiiiiiiii"    # values 110 - 119
+# )
 
 # mozemy zrobic padding po lewej stronie i nie po prawej, bo i tak bedzie przeskok z prawej strony szachownicy na lewa jesli zrobimy jeden ruch w prawo
 
