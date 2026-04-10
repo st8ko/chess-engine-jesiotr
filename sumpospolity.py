@@ -83,16 +83,67 @@ possible_moves = {
 
 def pseudolegal_move(board, white_moves):
     '''
-    function generating pseudolegal moves
+    function generating pseudolegal moves, i.e. moves which do not check if they will leave king in check
     board - input state of the board
     white_moves = 1 if it is the white player's move and 0 if it is black player's move
     '''
+    available_moves = [] * 400 # set a number of maximum moves a player can have (an upped bound, not reachable) for computational efficiency
+    move_count = 0
     if white_moves:
-        my_pieces = range(1, 6)
+        my_pieces = range(1, 7) # numbers 1-6
+        enemy_pieces = range(7, 13) # numbers 7 - 12
     else:
-        my_pieces = range(7, 12)
-    print(my_pieces)
-    #TODO continue this function
+        my_pieces = range(7, 13) # numbers 7 - 12
+        enemy_pieces = range(1, 7)
+    
+    for tile in range(120):
+        if board[tile] in my_pieces:
+            piece = board[tile]
+        
+            if piece in sliding_pieces:
+                # Slide until blocked
+                for move in possible_moves[piece]:
+                    original_move = move
+                    while board[tile + move] not in my_pieces and board[tile + move] != OFF_BOARD:
+                        available_moves[move_count] = [tile, tile + move]
+                        move_count += 1
+                        # break off when capturing an enemy pieces
+                        if board[tile + move] in enemy_pieces:
+                            continue
+                        move += original_move
+            elif piece not in sliding_pieces: # this statement might not be necessary           
+                if piece == 1:
+                    if 81 <= tile <= 88:
+                        possible_moves[WP].append(N+N) # add double move at the starting position for white pawns
+                        if board[tile + N + E] in enemy_pieces: 
+                            possible_moves[WP].append(N + E)
+                        if board[tile + N + W] in enemy_pieces:
+                            possible_moves[WP].append(N + W)
+                elif piece == 7:
+                    if 31 <= tile <= 38:
+                        possible_moves[BP].append(S+S) # add double move at the starting position for black pawns
+                        if board[tile + S + E] in enemy_pieces:
+                            possible_moves[BP].append(S + E)
+                        if board[tile + S + W] in enemy_pieces:
+                            possible_moves[BP].append(S + W)
+                #TODO special cases for castling & en passant
+                #TODO special cases for whatever special moves there exist besides the ones mentioned above
+                for move in possible_moves[piece]:
+                    if board[tile + move] not in my_pieces and board[tile + move] != OFF_BOARD:                       
+                        #  if make_move(board, start = tile, end = tile + move) not in my_pieces: # It doesn't have to make the moves now, only check if they are possible
+                        available_moves[move_count] = [tile, tile + move]
+                        move_count += 1
+                        
+                        
+                            
+        
+            for move in possible_moves[piece]:
+                captured = make_move(board, tile, tile + move)
+                # should it store at this point what can be captured?
+
+#the pseudolegal generator function should extract all moves which are possible now            
+    
+    
     
 pseudolegal_move(0, 1)
 
