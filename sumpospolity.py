@@ -90,12 +90,11 @@ def pseudolegal_move(board, white_moves):
     white_moves = 1 if it is the white player's move and 0 if it is black player's move
     '''
     available_moves = []
-    move_count = 0
     if white_moves:
         my_pieces = range(1, 7) # numbers 1-6
         enemy_pieces = range(7, 13) # numbers 7 - 12
     else:
-        my_pieces = range(7, 13) # numbers 7 - 12
+        my_pieces = range(7, 13)
         enemy_pieces = range(1, 7)
     
     for tile in range(120):
@@ -108,61 +107,43 @@ def pseudolegal_move(board, white_moves):
                     original_move = move
                     while board[tile + move] not in my_pieces and board[tile + move] != OFF_BOARD:
                         available_moves.append([tile, tile + move])
-                        move_count += 1 # this is not needed anymore i think
                         # break off when capturing an enemy pieces
-                        if board[tile + move] in enemy_pieces:
-                            break
-                        move += original_move
+                        if board[tile + move] in enemy_pieces: #TODO fix this logic
+                            break  #get out to the next iteration of loopu #108
+                        else:
+                            move += original_move
+                            continue
+                        continue  #get out to the next iteration of loop #106  
+                            
             elif piece in [1,7]: # special moves for pawns
-                #migrate all the logic for pawns here!
-                #TODO check if the next square is empty
-                #TODO check if you are in the starting position
-                #TODO check if there is an enemy piece in front of you
-                continue
-            elif piece not in sliding_pieces: # this statement might not be necessary           
-                # if piece == 1: # This is migrated to another part
-                #     if 81 <= tile <= 88:
-                #         possible_moves[WP].append(N+N) # add double move at the starting position for white pawns
-                #     if board[tile + N + E] in enemy_pieces: 
-                #         possible_moves[WP].append(N + E)
-                #     if board[tile + N + W] in enemy_pieces:
-                #         possible_moves[WP].append(N + W)
-                # elif piece == 7:
-                #     if 31 <= tile <= 38:
-                #         possible_moves[BP].append(S+S) # add double move at the starting position for black pawns
-                #     if board[tile + S + E] in enemy_pieces:
-                #         possible_moves[BP].append(S + E)
-                #     if board[tile + S + W] in enemy_pieces:
-                #         possible_moves[BP].append(S + W)
+                if piece == 1: # white pawn logic
+                    if board[tile + N] == EMPTY:
+                        available_moves.append([tile, tile + N])
+                    if 81 <= tile <= 88: # check if the pawn is in the starting position
+                        if board[tile + N + N] == EMPTY: 
+                            available_moves.append([tile, tile + N + N])
+                    if board[tile + N + E] in enemy_pieces:
+                        available_moves.append([tile, tile + N + E])
+                    if board[tile + N + W] in enemy_pieces:
+                        available_moves.append([tile, tile + N + W])
+                
+                if piece == 7: # black pawn logic
+                    if board[tile + S] == EMPTY:
+                        available_moves.append([tile, tile + S])
+                    if 31 <= tile <= 38: # check if the pawn is in the starting position
+                        if board[tile + S + S] == EMPTY:
+                            available_moves.append([tile, tile + S + S])
+                    if board[tile + S + E] in enemy_pieces:
+                        available_moves.append([tile, tile + S + E])
+                    if board[tile + S + W] in enemy_pieces:
+                        available_moves.append([tile, tile + S + W])
+
+            else: # elif piece not in sliding_pieces and piece not in [1,7]: # this statement might not be necessary           
                 #TODO special cases for castling & en passant
                 #TODO special cases for whatever special moves there exist besides the ones mentioned above
-                if board[tile] == 7:
-                    if 31 <= tile <= 38:
-                        #double move if pawn in the starting position
-                        possible_moves[BP].append(S + S) # remove this later
-                if board[tile] == 1:
-                    if 81 <= tile <= 88:
-                        #double move if pawn in the starting position
-                        possible_moves[WP].append(N + N) # remove this later
-                for move in possible_moves[piece]:
-                    if board[tile] == 1:
-                        #This is a white pawn, it needs special attention                     
-                        if move == N and board[tile+move] in enemy_pieces:
-                            break
-                    if board[tile] == 7:
-                        #This is a black pawn, it needs special attention
-                        if move == S and board[tile + move] in enemy_pieces:
-                            break # pawn can't takeover enemy pieces if they are in front of it
- 
+                for move in possible_moves[piece]: 
                     if board[tile + move] not in my_pieces and board[tile + move] != OFF_BOARD:  
-                        #TODO special case for pawns moved here
-                        #  if make_move(board, start = tile, end = tile + move) not in my_pieces: # It doesn't have to make the moves now, only check if they are possible
                         available_moves.append([tile, tile + move])
-                        if N + N in possible_moves[WP]:
-                            possible_moves[WP].remove(N + N)
-                        if S + S in possible_moves[BP]:
-                            possible_moves[BP].remove(S + S)
-                        move_count += 1 # I don't think this is needed anymore
     return(available_moves)            
                                             
                             
@@ -171,10 +152,48 @@ def pseudolegal_move(board, white_moves):
 #the pseudolegal generator function should extract all moves which are possible now            
     
     
-    
-print(f'we are aiming to have 20 moves here, we currently have: {len(pseudolegal_move(initial_board(), 1))}')
-print(f' the list of moves we have now:{pseudolegal_move(initial_board(), 1)}')
+# Tests
+#starting position    
+# print(f'we are aiming to have 20 moves here, we currently have: {len(pseudolegal_move(initial_board(), 1))} \n')
+# print(f' the list of moves we have now:{pseudolegal_move(initial_board(), 1)}')
+# TEST PASSED
 
+# rook in the middle of the board
+def test_rook_mid_board():
+    b = [OFF_BOARD] * 120
+    
+    # Safely clear only the playable 8x8 area
+    # rank_start will be 20, 30, 40... up to 90
+    for rank_start in range(20, 100, 10): 
+        b[rank_start + 1 : rank_start + 9] = [EMPTY] * 8
+    
+    # Place a White Rook at 55 (Square E5)
+    b[55] = WR
+    return b
+# print(f' we are aiming to have 14 moves here, we currently have: {len(pseudolegal_move(test_rook_mid_board(), 1))}\n')
+# print(f' the moves we have now: {pseudolegal_move(test_rook_mid_board(), 1)}')
+# TEST PASSED
+
+# caged bishop test
+def test_bishop_blocked():
+    b = [OFF_BOARD] * 120
+    
+    for rank_start in range(20, 100, 10): 
+        b[rank_start + 1 : rank_start + 9] = [EMPTY] * 8
+    
+    # Place White Bishop at 55 (E5)
+    b[44] = WB 
+    
+    # Obstruction 1: Friendly Pawn at 33 (C7)
+    b[33] = WP 
+    
+    # Obstruction 2: Enemy Pawn at 77 (G3)
+    b[77] = BP     
+    return b
+
+# print(f' we are aiming to have 9 moves here, we currently have: {len(pseudolegal_move(test_bishop_blocked(), 1))}\n')
+# print(f' the moves we have now: {pseudolegal_move(test_bishop_blocked(), 1)}')
+# TEST PASSED
 
 #TODO for possible_moves variable, collapse black and white pieces together, so it is more compact, and then further down the line verify by using the figures with .lower() or .upper() if needed
 #TODO somehow there has to be a distinction that King can only move one tile at a time, and the queen can go as many as she can within the chessboard, and as long as there are no enemy pieces on the way
