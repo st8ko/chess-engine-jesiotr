@@ -39,7 +39,7 @@ def make_move(board, start, end):
     capture = board[end] # capturing the piece
     board[end] = board[start] # transfering the piece
     board[start] = EMPTY # emptying the initial field
-    return capture
+    return(board, capture]) 
 
 def unmake_move(board, start, end, captured = 0):
     '''
@@ -52,6 +52,7 @@ def unmake_move(board, start, end, captured = 0):
     '''
     board[start] = board[end] # bringing back the piece which made a move into its original location
     board[end] = captured # reinstalling the captured piece
+    return(board)
     
 
 
@@ -195,130 +196,86 @@ def test_bishop_blocked():
 # print(f' the moves we have now: {pseudolegal_move(test_bishop_blocked(), 1)}')
 # TEST PASSED
 
-#TODO for possible_moves variable, collapse black and white pieces together, so it is more compact, and then further down the line verify by using the figures with .lower() or .upper() if needed
-#TODO somehow there has to be a distinction that King can only move one tile at a time, and the queen can go as many as she can within the chessboard, and as long as there are no enemy pieces on the way
-#TODO implement the moving for en-passant, and castling and pawn promotion?
+def test_pawn_mechanics():
+    b = [OFF_BOARD] * 120
+    
+    for rank_start in range(20, 100, 10): 
+        b[rank_start + 1 : rank_start + 9] = [EMPTY] * 8
+    
+    # White Pawn at 64 (D4)
+    b[64] = WP
+    
+    # Enemy at 55 (E5)
+    b[55] = BP
+    
+    # Friendly at 54 (D5)
+    b[54] = WN 
+    
+    return b
 
-# Illegal tiles on the chessboard
+# print(f' we are aiming to have 9 moves here, we currently have: {len(pseudolegal_move(test_pawn_mechanics(), 1))}\n')
+# print(f' the moves we have now: {pseudolegal_move(test_pawn_mechanics(), 1)}')
+# TEST PASSED
 
-# illegal_tiles = (
-#     "iiiiiiiiii"    # values 0 - 9
-#     "iiiiiiiiii"    # values 10 - 19
-#     "iiLLLLLLLL"  # values 20 - 29
-#     "iiLLLLLLLL"  # values 30 - 39
-#     "iiLLLLLLLL"   # values 40 - 49
-#     "iiLLLLLLLL"   # values 50 - 59
-#     "iiLLLLLLLL"   # values 60 - 69
-#     "iiLLLLLLLL"   # values 70 - 79
-#     "iiLLLLLLLL"  # values 80 - 89
-#     "iiLLLLLLLL"   # values 90 - 99
-#     "iiiiiiiiii"    # values 100 - 109
-#     "iiiiiiiiii"    # values 110 - 119
-# )
+# Now we start implementing the legal move filtering
 
-# mozemy zrobic padding po lewej stronie i nie po prawej, bo i tak bedzie przeskok z prawej strony szachownicy na lewa jesli zrobimy jeden ruch w prawo
-
-
-def basic_move(input_state = board_beginning, start_location = 0, end_location = 0):
+def is_legal(board, white_moves, list_of_moves):
     '''
-    the most basic moving function
-    input_state indicates the state of the board before the move
-    start_location indicates from which field a piece is going to be moved
-    end_location indicates to which field the piece is going to be moved
-    the output of the function is new_state, the state of the board after the move is made
+    inputs: 
+    board -> input of the board state
+    white_moves -> 1 if white player moves, 0 if black player moves
+    list_of_moves -> list of moves are to be checked if they are legal or not
+    output:
+    legal_moves -> a list of moves which are legal out of the initial list_of_moves
     '''
+    if white_moves == 1:
+        my_pieces = range(1, 7)
+        enemy_pieces = range(7, 13)
+        your_king = WK
+    else:
+        my_pieces = range(7, 13)
+        enemy_pieces = range(1, 7)
+        your_king = BK
     
-    #Checking if the start and end location even exist
-    if start_location == end_location:
-        raise Exception('Invalid move, the end location cannot be the same as the start locaiton')
+    pieces_owned_enemy = []
     
-    #Checking if the start and end locations are within the chessboard string
-    if start_location < 0 or start_location > 120 or end_location < 0 or end_location > 120:
-        raise Exception('Invalid moves, the moves are outside of the chessboard')
+    for square in range(120):
+        if board[square] in enemy_pieces:
+            pieces_owned_enemy.append(board[square])
+            
     
-    #Checking if the move is not stepping outside of the chessboard
-    if illegal_tiles[end_location].islower(): 
-        raise Exception("Error, you can not move your piece to that tile")
+    kinds_of_pieces_enemy = set(pieces_owned_enemy)
     
-    #Checking if your piece is not standing on the field to which you are moving your piece
-    if input_state[start_location].islower() and input_state[end_location].islower() or input_state[start_location].isupper() and input_state[end_location].isupper():
-        raise Exception("You can not do this move, your piece is standing on the tile to which you are trying to move")
-    
-    #Extracting informations about the piece and its move
-    modifying_state = input_state
-    moving_piece = modifying_state[start_location] # extract the piece that is going to be moving
-    print(f'the moving piece is {moving_piece}')
-    modifying_state = modifying_state[:start_location] + ' ' + modifying_state[start_location+1:]
+    legal_moves = []
+    # now we want to scan what pieces does the enemy have currently, to attack our king
+    for start, end in list_of_moves:
+        board, captured_piece = make_move(board, start, end)
+        your_king_tile = board.index(your_king)
+        
+        
+        
+        if your_king_tile in pseudolegal_move(board, white_moves = not(white_moves)): # generate pseudolegal moves for the opponent
+            continue
+        else: 
+            legal_moves.append([start, end])
+            
+        
+        # for enemy_piece in kinds_of_pieces_enemy:
+        #     board[your_king_tile] = enemy_piece # place the enemy piece at the king tile and see if it can capture any equivalent enemy piece
+        #     if enemy_piece > 6:
+        #         my_piece = enemy_piece - 6
+        #     else: 
+        #         my_piece = enemy_piece + 6
+        #     # do I have to invoke all my logic from the pseudolegal move generator function here?
+        
+        board = unmake_move(board, start, end, captured = captured_piece)
+    return(legal_moves)
+            
+        
+        
+        
+        
 
-    #Checking if there is a piece on the tile from which you want to move
-    if moving_piece == " ":
-        raise Exception('There is no piece on the field from which you are trying to move')
-    
-    #TODO check if the move which is made is actually possible, according to the set of legal moves by each piece
-    # currently the list of moves does not include castling nor en passant, they are going to be added later
-    the_move = end_location - start_location
-    
-    # Move logic for the pawns
-    if moving_piece == "P" or moving_piece == "p":
-        if start_location in [range(30, 39), range(80, 89)]:
-            #extra moves from the starting tile for the pawns
-            possible_moves["P"] = [N, N + N]
-            possible_moves["p"] = [S, S + S]
-        if moving_piece.isupper() and modifying_state[end_location].islower() or moving_piece.islower() and modifying_state[end_location].isupper():
-            aa0 = 0 #placeholder
-            # possible_moves["P"] = possible_moves["P"].join(N+E) 
-            #TODO this logic doesn't work out yet -> consider: there would have to be separate function for movign diagonally to the right or left -> that would be 4 separate cases afterwards, maybe there is a simpler way?
-            # nie wiem czy to jest dobre podejście, bo w ten sposób sprawdzane są tylko ruchy które mozna wykonac, a nie wszystkie mozliwe ruchy?
-    
-    if the_move not in possible_moves[moving_piece]:
-        print(f'the move you are trying to make: {the_move}, while the allowed moves are {possible_moves[moving_piece]}')
-        raise Exception('The piece you are trying to move doesn\'t move like that')
-    
-    #TODO expand the list of possible moves, make it more sophisticated
-    # pawns can move two tiles only from their starting position
-    # pawns can go one step diagonally only when there is an enemy piece on the tile on the diagonal
-    # pieces can't jump over other pieces, unless it is a rook (or castling?)
-    # extend rooks, bishops and queens moves so they can move as much as they would like towards each of the directions
-    
-    
-    #Checking if enemy piece is captured
-    if modifying_state[end_location] != " ":
-        print(f'Taking over a piece: {modifying_state[end_location]}')
-        captured_piece = modifying_state[end_location]
-        output_state = modifying_state[:end_location] + moving_piece + modifying_state[end_location+1:]
-        return(output_state)
-    
-    #Checking if the end location tile is empty
-    if modifying_state[end_location] == " ":
-        # Modifying the tile onto which you are moving
-        output_state = modifying_state[:end_location] + moving_piece + modifying_state[end_location+1:]
-        return(output_state)
     
 
-#TODO there is something wrong with capturing the pieces, once a capture happens, the piece doubles (appears both in the its starting location, and the location at which it takes over an enemy piece)
-# Moreover it seems that the state of the game does not see that a piece changes in a given position, loko at Move 3 and the fact that the engine does not recognize any pieces standing on position 55, while it definitely should, given the piece that stands there is captured    
-    
-#TODO there is a problem with how the pieces are moved, it seems to me that the indexes are changed in an inappropriate manner    
 
-# state1 = basic_move(start_location = 86, end_location = 66)  
-# # print("="*30 + "MOVE 1" + "=" * 30)
-# print(state1)
-# # print("="*30 + "MOVE 2" + "=" * 30)
-# state2 = basic_move(input_state = state1, start_location = 35, end_location = 55)
-# print(state2)
-# print(f'the piece on the 55th field is {state2[55]}')
-
-# state3 = basic_move(input_state = state2, start_location = 65, end_location = 55)    
-# print(state3)
-
-# state1 = basic_move(start_location = 88, end_location = 68)
-# print(f'the piece which just moved is: {state1[67]}')
-# state2 = basic_move(input_state = state1, start_location = 68, end_location = 48) #let's forget that this move is illegal now
-# state3 = basic_move(input_state = state2, start_location = 48, end_location = 37)
-# state4 = basic_move(input_state = state3, start_location = 37, end_location = 26)
-# print(state4)
-
-
-#TODO enable sequential playing, so that the state of the game is remembered and saved as the current state of the game, after a move is made
-
-#TODO: enable the evaluation function, with the ability to determine whether the game has ended (so once you can capture the king)
