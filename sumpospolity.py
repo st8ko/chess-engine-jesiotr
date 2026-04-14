@@ -39,7 +39,7 @@ def make_move(board, start, end):
     capture = board[end] # capturing the piece
     board[end] = board[start] # transfering the piece
     board[start] = EMPTY # emptying the initial field
-    return(board, capture]) 
+    return([board, capture]) 
 
 def unmake_move(board, start, end, captured = 0):
     '''
@@ -121,7 +121,7 @@ def pseudolegal_move(board, white_moves):
                     if board[tile + N] == EMPTY:
                         available_moves.append([tile, tile + N])
                     if 81 <= tile <= 88: # check if the pawn is in the starting position
-                        if board[tile + N + N] == EMPTY: 
+                        if board[tile + N + N] == EMPTY and board[tile + N] == EMPTY: 
                             available_moves.append([tile, tile + N + N])
                     if board[tile + N + E] in enemy_pieces:
                         available_moves.append([tile, tile + N + E])
@@ -132,7 +132,7 @@ def pseudolegal_move(board, white_moves):
                     if board[tile + S] == EMPTY:
                         available_moves.append([tile, tile + S])
                     if 31 <= tile <= 38: # check if the pawn is in the starting position
-                        if board[tile + S + S] == EMPTY:
+                        if board[tile + S + S] == EMPTY and board[tile + S] == EMPTY:
                             available_moves.append([tile, tile + S + S])
                     if board[tile + S + E] in enemy_pieces:
                         available_moves.append([tile, tile + S + E])
@@ -231,11 +231,11 @@ def is_legal(board, white_moves, list_of_moves):
     if white_moves == 1:
         my_pieces = range(1, 7)
         enemy_pieces = range(7, 13)
-        your_king = WK
-    else:
+        my_king = WK
+    elif white_moves == 0:
         my_pieces = range(7, 13)
         enemy_pieces = range(1, 7)
-        your_king = BK
+        my_king = BK
     
     pieces_owned_enemy = []
     
@@ -250,29 +250,45 @@ def is_legal(board, white_moves, list_of_moves):
     # now we want to scan what pieces does the enemy have currently, to attack our king
     for start, end in list_of_moves:
         board, captured_piece = make_move(board, start, end)
-        your_king_tile = board.index(your_king)
+        your_king_tile = board.index(my_king)
         
-        
-        
-        if your_king_tile in pseudolegal_move(board, white_moves = not(white_moves)): # generate pseudolegal moves for the opponent
-            continue
-        else: 
-            legal_moves.append([start, end])
-            
-        
-        # for enemy_piece in kinds_of_pieces_enemy:
-        #     board[your_king_tile] = enemy_piece # place the enemy piece at the king tile and see if it can capture any equivalent enemy piece
-        #     if enemy_piece > 6:
-        #         my_piece = enemy_piece - 6
-        #     else: 
-        #         my_piece = enemy_piece + 6
-        #     # do I have to invoke all my logic from the pseudolegal move generator function here?
+        for enemy_piece in kinds_of_pieces_enemy:  #TODO fix this loop, make sure this command actually works and checks legality
+            board[your_king_tile] = enemy_pieces  
+            # is_destination = any(len(m) > 1 and m[1] == target_square for m in moves)
+            if any(len(sublist) > 1 and sublist[1] == your_king_tile for sublist in pseudolegal_move(board, white_moves = not(white_moves))):
+            # if any(your_king_tile in sublist for sublist in pseudolegal_move(board, white_moves = not(white_moves))):
+            # if your_king_tile in pseudolegal_move(board, white_moves = not(white_moves)): # generate pseudolegal moves for the opponent
+                continue
+            else: 
+                legal_moves.append([start, end])
+            board[your_king_tile] = my_king
+                
         
         board = unmake_move(board, start, end, captured = captured_piece)
     return(legal_moves)
             
-        
-        
+
+def board_for_legality():
+    b = [OFF_BOARD] * 120 # 
+    # Black pieces
+    b[21:29] = [EMPTY] * 8
+    b[31:39] = [EMPTY] * 8
+    b[41:79] = [EMPTY] * 38
+    b[68] = BB
+    b[81:89] = [WP] * 8
+    b[91:99] = WR, WN, WB, WQ, WK, WB, WN, WR
+    return b
+            
+print(f' we have {pseudolegal_move(board_for_legality(), 1)} pseudolegal moves')
+print(f' we have {is_legal(board = board_for_legality(), white_moves = 1, list_of_moves = pseudolegal_move(board_for_legality(), 1))} legal moves')
+
+
+            
+            
+list =[[1, 2], [3, 6]]        
+print(any(3 in sublist for sublist in list))        
+
+print(sublist for sublist in list)
         
         
 
