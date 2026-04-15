@@ -252,18 +252,16 @@ def is_legal(board, white_moves, list_of_moves):
         board, captured_piece = make_move(board, start, end)
         your_king_tile = board.index(my_king)
         
-        for enemy_piece in kinds_of_pieces_enemy:  #TODO fix this loop, make sure this command actually works and checks legality
-            board[your_king_tile] = enemy_pieces  
-            # is_destination = any(len(m) > 1 and m[1] == target_square for m in moves)
-            if any(len(sublist) > 1 and sublist[1] == your_king_tile for sublist in pseudolegal_move(board, white_moves = not(white_moves))):
-            # if any(your_king_tile in sublist for sublist in pseudolegal_move(board, white_moves = not(white_moves))):
-            # if your_king_tile in pseudolegal_move(board, white_moves = not(white_moves)): # generate pseudolegal moves for the opponent
-                continue
-            else: 
-                legal_moves.append([start, end])
-            board[your_king_tile] = my_king
-                
-        
+        # for enemy_piece in kinds_of_pieces_enemy:  #TODO fix this loop, make sure this command actually works and checks legality
+        # board[your_king_tile] = enemy_piece   #TEMPORARILY DISABLED
+        # is_destination = any(len(m) > 1 and m[1] == target_square for m in moves)
+        if any(len(sublist) > 1 and sublist[1] == your_king_tile for sublist in pseudolegal_move(board, white_moves = not(white_moves))):
+        # if any(your_king_tile in sublist for sublist in pseudolegal_move(board, white_moves = not(white_moves))):
+        # if your_king_tile in pseudolegal_move(board, white_moves = not(white_moves)): # generate pseudolegal moves for the opponent
+            # continue
+            pass
+        else: 
+            legal_moves.append([start, end])
         board = unmake_move(board, start, end, captured = captured_piece)
     return(legal_moves)
             
