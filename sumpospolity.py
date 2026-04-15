@@ -229,22 +229,9 @@ def is_legal(board, white_moves, list_of_moves):
     legal_moves -> a list of moves which are legal out of the initial list_of_moves
     '''
     if white_moves == 1:
-        my_pieces = range(1, 7)
-        enemy_pieces = range(7, 13)
         my_king = WK
     elif white_moves == 0:
-        my_pieces = range(7, 13)
-        enemy_pieces = range(1, 7)
         my_king = BK
-    
-    pieces_owned_enemy = []
-    
-    for square in range(120):
-        if board[square] in enemy_pieces:
-            pieces_owned_enemy.append(board[square])
-            
-    
-    kinds_of_pieces_enemy = set(pieces_owned_enemy)
     
     legal_moves = []
     # now we want to scan what pieces does the enemy have currently, to attack our king
@@ -252,13 +239,7 @@ def is_legal(board, white_moves, list_of_moves):
         board, captured_piece = make_move(board, start, end)
         your_king_tile = board.index(my_king)
         
-        # for enemy_piece in kinds_of_pieces_enemy:  #TODO fix this loop, make sure this command actually works and checks legality
-        # board[your_king_tile] = enemy_piece   #TEMPORARILY DISABLED
-        # is_destination = any(len(m) > 1 and m[1] == target_square for m in moves)
         if any(len(sublist) > 1 and sublist[1] == your_king_tile for sublist in pseudolegal_move(board, white_moves = not(white_moves))):
-        # if any(your_king_tile in sublist for sublist in pseudolegal_move(board, white_moves = not(white_moves))):
-        # if your_king_tile in pseudolegal_move(board, white_moves = not(white_moves)): # generate pseudolegal moves for the opponent
-            # continue
             pass
         else: 
             legal_moves.append([start, end])
@@ -279,16 +260,11 @@ def board_for_legality():
             
 print(f' we have {pseudolegal_move(board_for_legality(), 1)} pseudolegal moves')
 print(f' we have {is_legal(board = board_for_legality(), white_moves = 1, list_of_moves = pseudolegal_move(board_for_legality(), 1))} legal moves')
-
-
-            
-            
-list =[[1, 2], [3, 6]]        
-print(any(3 in sublist for sublist in list))        
-
-print(sublist for sublist in list)
+# TEST PASSED
         
-        
+#TODO do some more testing for the legality function
+#TODO enable sequential playing so that I can check the perft at depth 3
+#TODO I don't know if the perft depth 3 test requires or not the implementation of en passant and castling, add that if needed        
 
     
 
