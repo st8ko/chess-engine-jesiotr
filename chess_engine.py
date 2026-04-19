@@ -1,17 +1,20 @@
 # Chess engine
-import numpy as np
 
-## CHESSBOARD
 
-# We are going to use a 10 x 12 array to represent the chessboard. This is a more memory efficient way of representing the chessboard then the 12 x 12 array, given it is less computationally demanding and yet has the same functionalities.
+# Chessboard representation
+
+# We are going to use a 10 x 12 array to represent the chessboard. This is a more memory efficient way of representing
+# the chessboard then the 12 x 12 array, given it is less computationally demanding and yet has the same functionalities.
 
 
 # The pieces, and fields on the chessboard, are going to be encoded as constants
+
 EMPTY, OFF_BOARD = 0, 99
 WP, WN, WB, WR, WQ, WK = 1, 2, 3, 4, 5, 6
 BP, BN, BB, BR, BQ, BK = 7, 8, 9, 10, 11, 12
 
 # The chessboard is going to be an integer array, allowing for faster computation and easier mutations than a character string
+
 def initial_board():
     b = [OFF_BOARD] * 120 # 
     # Black pieces
@@ -22,39 +25,49 @@ def initial_board():
     b[91:99] = WR, WN, WB, WQ, WK, WB, WN, WR
     return b
 
-# Add a function to make a move
+# Making moves
 
 def make_move(board, start, end):
     '''
     function to make moves
-    input:
-    board - initial state of the board
-    start - the location on the board of the piece which is going to be moved
-    end - the location towards which the moving piece is moved
+    NOTE: function mutates board in-place for performance, the person calling is responsible to always call unmake_move 
+    to restore state. A safer approach would be to do copies, but would be roughly 10x slower for deep search,
+    because make/unmake is called million of times in minimax
     
-    output: 
-    capture - the number representing the piece which was just captured
+    inputs:
+    board -> initial state of the board
+    start -> the location on the board of the piece which is going to be moved
+    end -> the location towards which the moving piece is moved
+    
+    output:
+    capture -> the number representing the piece which was just captured
+    
     '''
     
     capture = board[end] # capturing the piece
     board[end] = board[start] # transfering the piece
     board[start] = EMPTY # emptying the initial field
-    return([board, capture]) 
+    # return([board, capture])
+    return(capture) 
+
 
 def unmake_move(board, start, end, captured = 0):
     '''
     function to unmake moves
-    input:
-    board - initial state of the board
-    start - the location on the board of the piece which was moved and is now going to be reverted TO
-    end - the location towards which the moving piece was moved and is now going to be reverted FROM
-    capture - the number representing the piece which was just captured
+    
+    inputs:
+    board -> initial state of the board
+    start -> the location on the board of the piece which was moved and is now going to be reverted TO
+    end -> the location towards which the moving piece was moved and is now going to be reverted FROM
+    capture -> the number representing the piece which was just captured
+    
+    output:
+    board -> board after unmaking the move
     '''
     board[start] = board[end] # bringing back the piece which made a move into its original location
     board[end] = captured # reinstalling the captured piece
     return(board)
     
-
 
 # Move Representations
 
@@ -80,11 +93,17 @@ possible_moves = {
     BN: [N+N+W, N+N+E, E+E+N, E+E+S, S+S+E, S+S+W, W+W+S, W+W+N] # black knight
 }
 
+
 def pseudolegal_move(board, white_moves):
     '''
     function generating pseudolegal moves, i.e. moves which do not check if they will leave king in check
-    board - input state of the board
-    white_moves = 1 if it is the white player's move and 0 if it is black player's move
+    
+    inputs:
+    board -> input state of the board
+    white_moves -> 1 if it is the white player's move and 0 if it is black player's move
+    
+    output:
+    available_moves -> list of moves available, in the form [[start_tile, end_tile], [start_tile2, end_tile2], ...]
     '''
     available_moves = []
     if white_moves:
@@ -105,7 +124,7 @@ def pseudolegal_move(board, white_moves):
                     while board[tile + move] not in my_pieces and board[tile + move] != OFF_BOARD:
                         available_moves.append([tile, tile + move])
                         # break off when capturing an enemy pieces
-                        if board[tile + move] in enemy_pieces: #TODO fix this logic
+                        if board[tile + move] in enemy_pieces:
                             break  #get out to the next iteration of loopu #108
                         else:
                             move += original_move
@@ -135,7 +154,7 @@ def pseudolegal_move(board, white_moves):
                     if board[tile + S + W] in enemy_pieces:
                         available_moves.append([tile, tile + S + W])
 
-            else: # elif piece not in sliding_pieces and piece not in [1,7]: # this statement might not be necessary           
+            else:          
                 #TODO special cases for castling & en passant
                 #TODO special cases for whatever special moves there exist besides the ones mentioned above
                 for move in possible_moves[piece]: 
@@ -143,17 +162,18 @@ def pseudolegal_move(board, white_moves):
                         available_moves.append([tile, tile + move])
     return(available_moves)            
                                             
-                            
-    
 
 # Legal Move Filtering
 
 def is_legal(board, white_moves, list_of_moves):
     '''
+    check and return legal moves for the specified player, out of the given list
+    
     inputs: 
     board -> input of the board state
     white_moves -> 1 if white player moves, 0 if black player moves
     list_of_moves -> list of moves are to be checked if they are legal or not
+    
     output:
     legal_moves -> a list of moves which are legal out of the initial list_of_moves
     '''
@@ -163,16 +183,15 @@ def is_legal(board, white_moves, list_of_moves):
         my_king = BK
     
     legal_moves = []
-    # now we want to scan what pieces does the enemy have currently, to attack our king
     for start, end in list_of_moves:
-        board, captured_piece = make_move(board, start, end)
+        captured_piece = make_move(board, start, end) # board is mutated in-place, without copying
         your_king_tile = board.index(my_king)
         
         if any(len(sublist) > 1 and sublist[1] == your_king_tile for sublist in pseudolegal_move(board, white_moves = not(white_moves))):
             pass
         else: 
             legal_moves.append([start, end])
-        board = unmake_move(board, start, end, captured = captured_piece)
+        unmake_move(board, start, end, captured = captured_piece)
     return(legal_moves)
 
         
