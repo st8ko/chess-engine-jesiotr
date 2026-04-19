@@ -10,8 +10,7 @@ I started building this to deepen my understanding of search algorithms and good
 **Board representation:** I chose to use 10x12 mailbox array (120 integers). I first experimented with a character string, but it proved to be a bad idea, given strings are immutable.
 The two-rank padding on each side allows off-board detection in O(1) without checking bounds. Sliding pieces simply stop when they hit the off-board value (99).
 
-![Chessboard representation with numbers representing position in the array](/images/board_representation.jpg "Chessboard representation")
-
+<img src="images/board_representation.jpg" alt="Chessboard representation with numbers representing position in the array" title="Chessboard representation" width="400" />
 
 **Move generation:** Two-phase approach:
 1. Pseudo-legal generation - all (en passant, castling and promotion are not yet supported) valid moves in chess, without looking if the king is left in check after move
@@ -64,3 +63,7 @@ This project benefited a lot from the knowledge in the [chess programming wiki](
 Given this engine is written in Python, and not C, it will be significantly slower than it's C counterpart, but provides a good foundation for me to start with. 
 
 My aim is to continue developing this project and perform different statistical tests for algorithm evaluations.
+
+The name jesiotr pays homage to the tendency to name chess engines after fish. Jesiotr is the Polish name for The European Sea Sturgeon, which I was amazed at when I found its sized and that it used to populate rivers in Poland before 1970s.
+
+<img src="images/jesiotr.webp" alt="Jesiotr found in the Vistula river, Poland 1929" title="Jesiotr" width="250" />
