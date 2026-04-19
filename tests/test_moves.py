@@ -1,80 +1,97 @@
-# Function to run tests
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-#TODO change print statements to asserts
-#starting position    
-print(f'we are aiming to have 20 moves here, we currently have: {len(pseudolegal_move(initial_board(), 1))} \n')
-print(f'the list of moves we have now:{pseudolegal_move(initial_board(), 1)}')
-# TEST PASSED
+from chess_engine import pseudolegal_move, is_legal, initial_board, EMPTY, OFF_BOARD, WP, WN, WB, WR, WQ, WK, BP, BN, BB, BR, BQ, BK # Downloading the functions from the chess engine script
 
-# rook in the middle of the board
+
+def empty_board():
+    '''Helper: returns a board with only OFF_BOARD tiles and empty playable squares.'''
+    b = [OFF_BOARD] * 120
+    for rank_start in range(20, 100, 10):
+        b[rank_start + 1: rank_start + 9] = [EMPTY] * 8
+    return b
+
+
+def test_initial_position():
+    '''Both sides should have exactly 20 moves from the starting position.'''
+    assert len(pseudolegal_move(initial_board(), 1)) == 20, "White should have 20 moves at start"
+    assert len(pseudolegal_move(initial_board(), 0)) == 20, "Black should have 20 moves at start"
+
+
 def test_rook_mid_board():
-    b = [OFF_BOARD] * 120
-    
-    # Safely clear only the playable 8x8 area
-    # rank_start will be 20, 30, 40... up to 90
-    for rank_start in range(20, 100, 10): 
-        b[rank_start + 1 : rank_start + 9] = [EMPTY] * 8
-    
-    # Place a White Rook at 55 (Square E5)
+    '''Rook on E5 with empty board should have 14 moves.'''
+    b = empty_board()
     b[55] = WR
-    return b
-print(f'we are aiming to have 14 moves here, we currently have: {len(pseudolegal_move(test_rook_mid_board(), 1))}\n')
-print(f'the moves we have now: {pseudolegal_move(test_rook_mid_board(), 1)}')
-# TEST PASSED
+    assert len(pseudolegal_move(b, 1)) == 14, "Rook on E5 should have 14 moves"
 
-# caged bishop test
+
 def test_bishop_blocked():
-    b = [OFF_BOARD] * 120
-    
-    for rank_start in range(20, 100, 10): 
-        b[rank_start + 1 : rank_start + 9] = [EMPTY] * 8
-    
-    # Place White Bishop at 55 (E5)
-    b[44] = WB 
-    
-    # Obstruction 1: Friendly Pawn at 33 (C7)
-    b[33] = WP 
-    
-    # Obstruction 2: Enemy Pawn at 77 (G3)
-    b[77] = BP     
-    return b
+    '''Bishop on D6, blocked by friendly on C7 and can capture enemy on G3.'''
+    b = empty_board()
+    b[44] = WB
+    b[33] = WP  # friendly blocker
+    b[77] = BP  # enemy to capture
+    assert len(pseudolegal_move(b, 1)) == 9, "Bishop should have 8 moves, and the pawn should have 1 move with these obstructions"
 
-print(f'we are aiming to have 9 moves here, we currently have: {len(pseudolegal_move(test_bishop_blocked(), 1))}\n')
-print(f'the moves we have now: {pseudolegal_move(test_bishop_blocked(), 1)}')
-# TEST PASSED
 
 def test_pawn_mechanics():
-    b = [OFF_BOARD] * 120
-    
-    for rank_start in range(20, 100, 10): 
-        b[rank_start + 1 : rank_start + 9] = [EMPTY] * 8
-    
-    # White Pawn at 64 (D4)
+    '''White pawn on D4, enemy on E5 to capture, friendly knight blocking D5.'''
+    b = empty_board()
     b[64] = WP
-    
-    # Enemy at 55 (E5)
-    b[55] = BP
-    
-    # Friendly at 54 (D5)
-    b[54] = WN 
-    
-    return b
+    b[55] = BP  # diagonal enemy — pawn can capture
+    b[54] = WN  # friendly blocking forward — pawn cannot push
+    assert len(pseudolegal_move(b, 1)) == 9, "Pawn should only have the diagonal capture, and the knight should have 8"
 
-print(f'we are aiming to have 9 moves here, we currently have: {len(pseudolegal_move(test_pawn_mechanics(), 1))}\n')
-print(f'the moves we have now: {pseudolegal_move(test_pawn_mechanics(), 1)}')
-# TEST PASSED
 
-def board_for_legality():
-    b = [OFF_BOARD] * 120 # 
-    # Black pieces
-    b[21:29] = [EMPTY] * 8
-    b[31:39] = [EMPTY] * 8
-    b[41:79] = [EMPTY] * 38
-    b[68] = BB
+def test_knight_center():
+    '''Knight in the center of the board should have 8 moves.'''
+    b = empty_board()
+    b[55] = WN
+    assert len(pseudolegal_move(b, 1)) == 8, "Knight on E5 should have 8 moves"
+
+
+def test_knight_corner():
+    '''Knight in a corner should have only 2 moves.'''
+    b = empty_board()
+    b[21] = WN
+    assert len(pseudolegal_move(b, 1)) == 2, "Knight on A8 should have 2 moves"
+
+
+def test_black_pawn_mechanics():
+    '''Mirror of the white pawn test — black pawn should behave symmetrically.'''
+    b = empty_board()
+    b[54] = BP   # black pawn on D5
+    b[63] = WP   # diagonal enemy — black pawn can capture
+    b[64] = BN   # friendly blocking forward
+    assert len(pseudolegal_move(b, 0)) == 9, "Black pawn should only have the diagonal capture, and the knight should have 8"
+
+
+def test_legality_removes_moves_leaving_king_in_check():
+    '''Any move that leaves own king in check should be filtered out.'''
+    b = empty_board()
+    b[68] = BB   # black bishop threatening white's back rank
     b[81:89] = [WP] * 8
     b[91:99] = WR, WN, WB, WQ, WK, WB, WN, WR
-    return b
-            
-print(f'we have {pseudolegal_move(board_for_legality(), 1)} pseudolegal moves')
-print(f'we have {is_legal(board = board_for_legality(), white_moves = 1, list_of_moves = pseudolegal_move(board_for_legality(), 1))} legal moves')
-# TEST PASSED
+    pseudo = pseudolegal_move(b, 1)
+    legal = is_legal(b, 1, pseudo)
+    assert len(legal) < len(pseudo), "Some pseudo-legal moves should be filtered as illegal"
+
+
+if __name__ == "__main__":
+    tests = [
+        test_initial_position,
+        test_rook_mid_board,
+        test_bishop_blocked,
+        test_pawn_mechanics,
+        test_knight_center,
+        test_knight_corner,
+        test_black_pawn_mechanics,
+        test_legality_removes_moves_leaving_king_in_check,
+    ]
+    for test in tests:
+        try:
+            test()
+            print(f"PASSED: {test.__name__}")
+        except AssertionError as e:
+            print(f"FAILED: {test.__name__} — {e}")
